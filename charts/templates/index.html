@@ -1,0 +1,125 @@
+<!-- index.html -->
+{% load static %}
+<html>
+<head>
+<title>CanvasJS Python Charts</title>
+<script>
+  window.onload = function() {
+
+<!--    var Mydata = "{{ btc_usd_data|safe }}";-->
+
+    var Mydata = [];
+    var showChart = function(data) {
+        var btcUSDDps = [];
+
+        for (var i = 0; i < data.length; i++) {
+            var dataDate = data[i].date;
+            btcUSDDps.push({
+                x: new Date(parseInt(dataDate.split("-")[0]), parseInt(dataDate.split("-")[1]), parseInt(dataDate.split("-")[2]), parseInt(dataDate.split(" ")[1].split(":")[0]), parseInt(dataDate.split(" ")[1].split(":")[1]), parseInt(dataDate.split(" ")[1].split(":")[2])),
+                y: [data[i].open, data[i].high, data[i].low, data[i].close],
+                color: data[i].open < data[i].close ? "#77A034" : "#C0504E"
+            });
+        }
+
+
+
+        var chart = new CanvasJS.Chart("chartContainer", {
+            theme: "light2",
+            exportEnabled: true,
+            zoomEnabled: true,
+            title: {
+                text: "قیمت سهام یرو به دلار"
+            },
+            axisX: {
+                crosshair: {
+                    enabled: true,
+                    snapToDataPoint: true,
+                    valueFormatString: "MMM DD, YYYY"
+                }
+            },
+            axisY: {
+                prefix: "",
+                title: "قیمت",
+                crosshair: {
+                    enabled: true,
+                    snapToDataPoint: true,
+                    valueFormatString: "#,#0.000000"
+                }
+            },
+            data: [{
+                type: "candlestick",
+                yValueFormatString: "#,##0.000000",
+                xValueFormatString: "MMM DD, YYYY",
+                risingColor: "#77A034",
+                fallingColor: "#C0504E",
+                dataPoints: btcUSDDps
+            }]
+        });
+        chart.render();
+    };
+
+    <!--showChart(Mydata);-->
+    <!-- === === === === === === -->
+    renderAgain = function() {
+        fetch("./time/" + document.getElementById("timeframe").value + "/" +document.getElementById("symbols").value , {
+                method: 'Get',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then((response) => response.json())
+            .then((json) => {
+                d = json;
+                showChart(JSON.parse(d));
+            });
+
+    }
+
+    var bindoptions = function() {
+
+        var lst = document.getElementById("symbols");
+        fetch("./getsymbols/")
+            .then((response) => response.json())
+            .then((json) => {
+                d = json;
+                console.log(d.length);
+                for (i = 0; i < d.length; i++) {
+                    var option = document.createElement("option");
+                    option.text = d[i];
+                    option.value = d[i];
+                    lst.appendChild(option);
+
+                }
+            });
+
+    }
+
+    bindoptions();
+
+}
+</script>
+</head>
+<body>
+
+  <select name="timeframe" id="timeframe" onchange="renderAgain()">
+  <option value="M1">M1</option>
+  <option value="M5">M5</option>
+  <option value="m15">M15</option>
+  <option value="m30">M30</option>
+  <option value="h1">H1</option>
+  <option value="h4">H4</option>
+  <option value="D1">d1</option>
+  <option value="w">W</option>
+
+</select>
+
+
+  <select name="symbols" id="symbols" onchange="renderAgain()">
+  </select>
+
+
+
+  <div id="chartContainer" style="height: 360px; width: 100%;"></div>
+  <script src="{% static 'canvasjs.min.js' %}"></script>
+</body>
+</html>            
